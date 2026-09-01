@@ -1,0 +1,31 @@
+# Environment files
+.env.local
+
+# Go
+*.exe
+*.test
+# ...but the examples env file is tracked (*.test above would swallow it)
+!examples/.env.test
+*.out
+vendor/
+
+# Local working directory for docker-compose.yml
+app/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Example build output
+examples/hello

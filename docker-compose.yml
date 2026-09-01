@@ -1,0 +1,27 @@
+# Docker Compose configuration for running Go
+#
+# Usage:
+#   docker compose run --rm golang
+#   docker compose run --rm golang build ./...
+#   docker compose run --rm golang test ./...
+#
+# This will run the Go toolchain on your codebase with default settings
+
+services:
+  golang:
+    image: ragedunicorn/golang:${GOLANG_VERSION:-latest}
+    container_name: golang
+    volumes:
+      - ./app:/app
+      # Named volume for the module and build cache. Without it every run
+      # re-downloads modules and recompiles from scratch. A fresh volume is
+      # initialized owned by the golang user (the image pre-creates /go).
+      - gocache:/go
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    environment:
+      - TERM=xterm-256color
+
+volumes:
+  gocache:

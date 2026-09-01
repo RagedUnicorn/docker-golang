@@ -1,0 +1,120 @@
+schemaVersion: 2.0.0
+
+commandTests:
+  # Pinned to the exact release; Renovate keeps this in step with the
+  # GO_VERSION build arg (see the customManager in renovate.json)
+  - name: 'Go version check'
+    command: 'go'
+    args: ['version']
+    expectedOutput: ['go1.27.0']
+    exitCode: 0
+
+  - name: 'Go resolves on PATH'
+    command: 'which'
+    args: ['go']
+    expectedOutput: ['/usr/local/go/bin/go']
+    exitCode: 0
+
+  - name: 'Gofmt resolves on PATH'
+    command: 'which'
+    args: ['gofmt']
+    expectedOutput: ['/usr/local/go/bin/gofmt']
+    exitCode: 0
+
+  # The Go environment is set from ENV rather than derived from $HOME, which
+  # container-structure-test does not populate for command tests
+  - name: 'GOPATH is set'
+    command: 'go'
+    args: ['env', 'GOPATH']
+    expectedOutput: ['/go']
+    exitCode: 0
+
+  - name: 'GOMODCACHE is set'
+    command: 'go'
+    args: ['env', 'GOMODCACHE']
+    expectedOutput: ['/go/pkg/mod']
+    exitCode: 0
+
+  - name: 'GOCACHE is set'
+    command: 'go'
+    args: ['env', 'GOCACHE']
+    expectedOutput: ['/go/cache']
+    exitCode: 0
+
+  # A pinned image stays pinned: no implicit toolchain downloads
+  - name: 'GOTOOLCHAIN is local'
+    command: 'go'
+    args: ['env', 'GOTOOLCHAIN']
+    expectedOutput: ['local']
+    exitCode: 0
+
+  - name: 'Cgo is enabled by default'
+    command: 'go'
+    args: ['env', 'CGO_ENABLED']
+    expectedOutput: ['1']
+    exitCode: 0
+
+  - name: 'C compiler version check'
+    command: 'gcc'
+    args: ['--version']
+    expectedOutput: ['gcc']
+    exitCode: 0
+
+  - name: 'Git version check'
+    command: 'git'
+    args: ['--version']
+    expectedOutput: ['git version']
+    exitCode: 0
+
+  # Compiling and running as the non-root user also proves the build cache
+  # under /go is writable
+  - name: 'Go run executes a program'
+    setup: [['sh', '-c', 'printf "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n" > /app/main.go']]
+    command: 'go'
+    args: ['run', '/app/main.go']
+    expectedOutput: ['Hello, World!']
+    exitCode: 0
+
+  # Importing "C" forces the cgo path, so this fails unless gcc and musl-dev
+  # are both present and wired up
+  - name: 'Cgo build works'
+    setup: [['sh', '-c', 'printf "package main\n\nimport \"C\"\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"cgo works\")\n}\n" > /app/cgo.go']]
+    command: 'go'
+    args: ['run', '/app/cgo.go']
+    expectedOutput: ['cgo works']
+    exitCode: 0
+
+  - name: 'Gofmt formats source'
+    setup: [['sh', '-c', 'printf "package main\nfunc  main( ){}\n" > /app/unformatted.go']]
+    command: 'gofmt'
+    args: ['-l', '/app/unformatted.go']
+    expectedOutput: ['/app/unformatted.go']
+    exitCode: 0
+
+  - name: 'Non-root user exists'
+    command: 'id'
+    args: ['golang']
+    expectedOutput:
+      - 'uid='
+      - 'golang'
+    exitCode: 0
+
+  - name: 'Check working directory'
+    command: 'pwd'
+    args: []
+    expectedOutput: ['/app']
+    exitCode: 0
+
+  # Runs as the image's default user (golang), so this also proves the
+  # /app chown made the working directory writable
+  - name: 'Working directory is writable'
+    command: 'sh'
+    args: ['-c', 'touch /app/.write-test && rm /app/.write-test']
+    exitCode: 0
+
+  # Absolute path instead of $HOME: container-structure-test does not populate
+  # HOME when running commands
+  - name: 'Build cache directory is writable'
+    command: 'sh'
+    args: ['-c', 'touch /go/cache/.write-test && rm /go/cache/.write-test']
+    exitCode: 0

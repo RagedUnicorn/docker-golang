@@ -1,0 +1,32 @@
+schemaVersion: 2.0.0
+
+metadataTest:
+  # OCI labels - These match values defined in the Dockerfile
+  labels:
+    - key: 'org.opencontainers.image.vendor'
+      value: 'ragedunicorn'
+    - key: 'org.opencontainers.image.authors'
+      value: 'Michael Wiesendanger <michael.wiesendanger@gmail.com>'
+    - key: 'org.opencontainers.image.source'
+      value: 'https://github.com/ragedunicorn/docker-golang'
+    - key: 'org.opencontainers.image.documentation'
+      value: 'https://github.com/ragedunicorn/docker-golang/blob/master/README.md'
+    - key: 'org.opencontainers.image.licenses'
+      value: 'MIT'
+    - key: 'org.opencontainers.image.base.name'
+      value: 'docker.io/library/alpine:3.24.1'
+
+  envVars:
+    - key: 'GOPATH'
+      value: '/go'
+    - key: 'GOMODCACHE'
+      value: '/go/pkg/mod'
+    - key: 'GOCACHE'
+      value: '/go/cache'
+    - key: 'GOTOOLCHAIN'
+      value: 'local'
+
+  entrypoint: ['go']
+  cmd: ['version']
+  workdir: '/app'
+  user: 'golang'

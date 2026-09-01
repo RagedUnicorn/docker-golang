@@ -1,0 +1,98 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build test image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          # Single-platform, daemon-loaded, no attestation manifest so the
+          # Container Structure Tests can inspect the image (an OCI index would
+          # fail with "no such image"). See TEST.md troubleshooting.
+          load: true
+          provenance: false
+          platforms: linux/amd64
+          tags: ragedunicorn/golang:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run Container Structure Tests
+        shell: bash
+        env:
+          GOLANG_TEST_VERSION: test
+        run: |
+          echo "::notice title=🧪 Running Tests::Validating Docker image before release..."
+          docker pull ragedunicorn/container-test:latest
+
+          echo "::group::Running all Container Structure Tests"
+          docker compose -f docker-compose.test.yml run --rm test-all
+          echo "::endgroup::"
+
+          echo "::notice title=✅ Tests Passed::All Container Structure Tests completed successfully!"
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/golang
+          tags: |
+            # Use the tag as-is, stripping only the 'v' prefix
+            # (e.g. 1.27.0-alpine3.24.1-1)
+            type=match,pattern=v(.*),group=1
+            # Bare Go version tag (e.g. 1.27.0). type=match instead of
+            # type=semver: metadata-action treats the alpine suffix as a semver
+            # prerelease and would render a semver pattern as the full version.
+            type=match,pattern=v(\d+\.\d+\.\d+)-alpine,group=1
+            # 'latest' tag for version tags
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}

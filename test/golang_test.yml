@@ -1,0 +1,68 @@
+schemaVersion: 2.0.0
+
+fileExistenceTests:
+  - name: 'Go binary exists'
+    path: '/usr/local/go/bin/go'
+    shouldExist: true
+    permissions: '-rwxr-xr-x'
+
+  - name: 'Gofmt binary exists'
+    path: '/usr/local/go/bin/gofmt'
+    shouldExist: true
+    permissions: '-rwxr-xr-x'
+
+  - name: 'Go standard library source exists'
+    path: '/usr/local/go/src/fmt'
+    shouldExist: true
+
+  # The C toolchain cgo and the race detector shell out to
+  - name: 'C compiler exists'
+    path: '/usr/bin/gcc'
+    shouldExist: true
+
+  # The go command shells out to git to resolve VCS module paths
+  - name: 'Git binary exists'
+    path: '/usr/bin/git'
+    shouldExist: true
+
+  - name: 'Make binary exists'
+    path: '/usr/bin/make'
+    shouldExist: true
+
+  # The GOPATH tree is pre-created with golang ownership (uid/gid 1000) so a
+  # named volume mounted at /go is initialized writable for the golang user
+  - name: 'GOPATH is owned by golang'
+    path: '/go'
+    shouldExist: true
+    uid: 1000
+    gid: 1000
+
+  - name: 'Module cache directory is owned by golang'
+    path: '/go/pkg/mod'
+    shouldExist: true
+    uid: 1000
+    gid: 1000
+
+  - name: 'Build cache directory is owned by golang'
+    path: '/go/cache'
+    shouldExist: true
+    uid: 1000
+    gid: 1000
+
+  - name: 'GOPATH bin directory exists'
+    path: '/go/bin'
+    shouldExist: true
+
+  - name: 'Working directory exists'
+    path: '/app'
+    shouldExist: true
+    isExecutableBy: 'any'
+
+  - name: 'SSL certificates for module downloads'
+    path: '/etc/ssl/certs/ca-certificates.crt'
+    shouldExist: true
+
+fileContentTests:
+  - name: 'CA certificates installed'
+    path: '/etc/ssl/certs/ca-certificates.crt'
+    expectedContents: ['-----BEGIN CERTIFICATE-----']

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "ignorePaths intentionally overrides the :ignoreModulesAndTests preset from config:recommended: test/ must stay visible so the metadata-test and command-test custom managers can update test/golang_metadata_test.yml and test/golang_command_test.yml",
+  "extends": [
+    "config:recommended"
+  ],
+  "schedule": [
+    "on monday"
+  ],
+  "timezone": "UTC",
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "ignorePaths": [
+    "docker-compose.yml",
+    "docker-compose.dev.yml",
+    "docker-compose.test.yml",
+    "examples/**"
+  ],
+  "packageRules": [
+    {
+      "matchCategories": [
+        "docker"
+      ],
+      "enabled": true,
+      "pinDigests": false
+    },
+    {
+      "description": "Automatically merge minor and patch updates for Alpine",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "alpine"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Group every Alpine reference (FROM, base.name label, metadata test) into one PR",
+      "matchPackageNames": [
+        "alpine"
+      ],
+      "groupName": "alpine",
+      "groupSlug": "alpine"
+    },
+    {
+      "description": "Group both Go references (the GO_VERSION build arg and the exact version asserted in the command test) into one PR, so a bump never lands as a green build arg plus a red test",
+      "matchDatasources": [
+        "golang-version"
+      ],
+      "groupName": "golang",
+      "groupSlug": "golang"
+    },
+    {
+      "description": "Automatically merge Go patch releases (security and bug fixes within a minor). Minor bumps are reviewed by hand: Go supports only the last two minors, so a minor is a deliberate move, not a routine one",
+      "matchDatasources": [
+        "golang-version"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "automerge": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update versions pinned via renovate comments before ARG lines in the Dockerfile",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)(?: versioning=(?<versioning>.*?))?\\s+ARG .*?=(?<currentValue>.*)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the Alpine base.name OCI label in the Dockerfile in sync with the FROM version",
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "alpine",
+      "versioningTemplate": "docker",
+      "matchStrings": [
+        "image\\.base\\.name=\"docker\\.io/library/alpine:(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the Alpine version in the metadata test in sync with the FROM version",
+      "managerFilePatterns": [
+        "/^test/golang_metadata_test\\.yml$/"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "alpine",
+      "versioningTemplate": "docker",
+      "matchStrings": [
+        "docker\\.io/library/alpine:(?<currentValue>[^']+)'"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the exact Go version asserted by the command test in sync with the GO_VERSION build arg",
+      "managerFilePatterns": [
+        "/^test/golang_command_test\\.yml$/"
+      ],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "go",
+      "matchStrings": [
+        "expectedOutput: \\['go(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)'\\]"
+      ]
+    }
+  ],
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rebaseWhen": "behind-base-branch",
+  "assignees": [
+    "ragedunicorn"
+  ]
+}

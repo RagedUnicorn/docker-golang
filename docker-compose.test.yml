@@ -1,0 +1,70 @@
+# Docker Compose configuration for running Container Structure Tests
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up
+#   docker compose -f docker-compose.test.yml run --rm test-all
+#
+# This will validate the Go Docker image structure, commands, and metadata.
+#
+# GOLANG_TEST_VERSION is deliberately a different variable from the
+# GOLANG_VERSION used by docker-compose.yml: .env pins GOLANG_VERSION to
+# 'latest' for day to day use, and reusing it here would silently point the
+# test suite at the published image instead of the local build. See TEST.md.
+
+services:
+  # Test file existence and permissions
+  container-test:
+    image: ragedunicorn/container-test:${CONTAINER_STRUCTURE_TEST_VERSION:-latest}
+    volumes:
+      - ./test/:/test:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["--image", "ragedunicorn/golang:${GOLANG_TEST_VERSION:-test}", "--config", "/test/golang_test.yml"]
+    labels:
+      org.opencontainers.image.title: "Container Structure Test - File Tests"
+      org.opencontainers.image.description: "Validating Go file structure and permissions"
+      org.opencontainers.image.vendor: "ragedunicorn"
+
+  # Test image metadata and labels
+  container-test-metadata:
+    image: ragedunicorn/container-test:${CONTAINER_STRUCTURE_TEST_VERSION:-latest}
+    volumes:
+      - ./test/:/test:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["--image", "ragedunicorn/golang:${GOLANG_TEST_VERSION:-test}", "--config", "/test/golang_metadata_test.yml"]
+    labels:
+      org.opencontainers.image.title: "Container Structure Test - Metadata Tests"
+      org.opencontainers.image.description: "Validating Go image metadata and OCI labels"
+      org.opencontainers.image.vendor: "ragedunicorn"
+
+  # Test command execution and Go functionality
+  container-test-command:
+    image: ragedunicorn/container-test:${CONTAINER_STRUCTURE_TEST_VERSION:-latest}
+    volumes:
+      - ./test/:/test:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["--image", "ragedunicorn/golang:${GOLANG_TEST_VERSION:-test}", "--config", "/test/golang_command_test.yml"]
+    labels:
+      org.opencontainers.image.title: "Container Structure Test - Command Tests"
+      org.opencontainers.image.description: "Validating Go command execution and functionality"
+      org.opencontainers.image.vendor: "ragedunicorn"
+
+  # Run all tests sequentially
+  test-all:
+    image: ragedunicorn/container-test:${CONTAINER_STRUCTURE_TEST_VERSION:-latest}
+    volumes:
+      - ./test/:/test:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: /bin/sh
+    command: >
+      -c "echo 'Running all Container Structure Tests for Go...' &&
+          container-structure-test test --image ragedunicorn/golang:${GOLANG_TEST_VERSION:-test} --config /test/golang_test.yml &&
+          echo '✓ File structure tests passed' &&
+          container-structure-test test --image ragedunicorn/golang:${GOLANG_TEST_VERSION:-test} --config /test/golang_command_test.yml &&
+          echo '✓ Command execution tests passed' &&
+          container-structure-test test --image ragedunicorn/golang:${GOLANG_TEST_VERSION:-test} --config /test/golang_metadata_test.yml &&
+          echo '✓ Metadata validation tests passed' &&
+          echo && echo '✅ All Go container tests completed successfully!'"
+    labels:
+      org.opencontainers.image.title: "Container Structure Test - All Tests"
+      org.opencontainers.image.description: "Running all validation tests for the Go image"
+      org.opencontainers.image.vendor: "ragedunicorn"

@@ -1,0 +1,29 @@
+# Git and documentation
+.git
+*.md
+LICENSE*
+
+# CI/CD
+.github/
+
+# Development
+.env
+.vscode/
+.idea/
+
+# Go
+*.exe
+*.test
+vendor/
+
+# Test files
+test/
+docker-compose*.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp

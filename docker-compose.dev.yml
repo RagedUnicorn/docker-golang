@@ -1,0 +1,40 @@
+# Docker Compose configuration for Go development
+#
+# This configuration extends the base build with development-specific settings
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml build              # Build dev image
+#   docker compose -f docker-compose.dev.yml run --rm golang-dev  # Get shell
+#
+# Features:
+#   - Mounts the entire project for live editing
+#   - Overrides the entrypoint for an interactive shell
+#   - Keeps the module and build cache in a named volume
+
+services:
+  golang-dev:
+    build: .
+    image: ragedunicorn/golang:dev
+    volumes:
+      - .:/app
+      - gocache-dev:/go
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    # Override entrypoint to get a shell
+    entrypoint: /bin/sh
+    labels:
+      org.opencontainers.image.title: "Go on Alpine Linux (Dev)"
+      org.opencontainers.image.description: "Go development environment for testing and debugging"
+      org.opencontainers.image.vendor: "ragedunicorn"
+    environment:
+      - TERM=xterm-256color
+    # Resource limits for development (optional)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 4G
+
+volumes:
+  gocache-dev:

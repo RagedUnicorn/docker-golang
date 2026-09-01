@@ -1,0 +1,50 @@
+# Compose project name: the default would be the directory name "examples",
+# which collides with the examples/ directory of every sibling docker-* repo
+# and makes compose report their containers as orphans.
+name: golang-examples
+
+# Simple docker-compose example for running Go programs
+#
+# Usage:
+#   docker compose run --rm hello-world
+#   docker compose run --rm build-hello
+#   docker compose run --rm go-shell
+#   docker compose run --rm golang run hello-world.go
+
+services:
+  # Base service configuration (inherited by the other services)
+  golang-base:
+    image: ragedunicorn/golang:${GOLANG_VERSION:-latest}
+    volumes:
+      - .:/app
+      # Keep the module and build cache between runs
+      - gocache:/go
+    working_dir: /app
+
+  # Run the hello world example
+  hello-world:
+    extends:
+      service: golang-base
+    command: ["run", "hello-world.go"]
+
+  # Compile the hello world example to ./hello
+  build-hello:
+    extends:
+      service: golang-base
+    command: ["build", "-o", "hello", "hello-world.go"]
+
+  # Interactive shell with the Go toolchain on PATH
+  go-shell:
+    extends:
+      service: golang-base
+    entrypoint: /bin/sh
+    stdin_open: true
+    tty: true
+
+  # General Go service for running any subcommand
+  golang:
+    extends:
+      service: golang-base
+
+volumes:
+  gocache:
