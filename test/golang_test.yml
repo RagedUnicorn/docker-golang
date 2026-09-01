@@ -53,6 +53,12 @@ fileExistenceTests:
     path: '/go/bin'
     shouldExist: true
 
+  # git refuses a bind-mounted repo owned by another uid as "dubious
+  # ownership", which breaks the default -buildvcs=auto in `go build`
+  - name: 'System gitconfig exists'
+    path: '/etc/gitconfig'
+    shouldExist: true
+
   - name: 'Working directory exists'
     path: '/app'
     shouldExist: true

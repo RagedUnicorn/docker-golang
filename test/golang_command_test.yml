@@ -66,6 +66,16 @@ commandTests:
     expectedOutput: ['git version']
     exitCode: 0
 
+  # A bind-mounted source tree is owned by the host user, not by golang, so
+  # git rejects it as "dubious ownership" unless it is trusted here. Without
+  # this the default -buildvcs=auto in `go build` fails on any real checkout
+  # with a .git directory
+  - name: 'Bind-mounted repositories are trusted by git'
+    command: 'git'
+    args: ['config', '--system', '--get-all', 'safe.directory']
+    expectedOutput: ['\*']
+    exitCode: 0
+
   # Compiling and running as the non-root user also proves the build cache
   # under /go is writable
   - name: 'Go run executes a program'

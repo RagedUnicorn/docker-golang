@@ -153,6 +153,14 @@ Alpine ships Go in its community repository, but the version is coupled to the A
 
 Verification is by GPG rather than a pinned SHA-256. The signing keys are version independent, so Renovate can bump `GO_VERSION` on its own with no checksum left to maintain by hand — contrast `docker-apktool`, where a self-pinned hash has to be refreshed manually on every bump. Two keys are fetched because the signer has rotated between releases; the current one is Google Inc. (Linux Packages Signing Authority).
 
+### Why git trusts every directory
+
+`go build` defaults to `-buildvcs=auto`, so it shells out to git to stamp the revision whenever the package directory is a checkout. A bind-mounted source tree is owned by the host user, not by the `golang` user in the container, and git rejects that with `detected dubious ownership in repository at '/app'` — which makes `go build ./...` fail outright on essentially every real project.
+
+The Dockerfile therefore runs `git config --system --add safe.directory '*'`. Trusting all directories is the right trade for a single-user build container that only ever sees what the caller explicitly mounts, and it is what CI images do; the safe.directory guard exists to protect against another local user's repository on a shared machine, which is not the situation here. The alternative would be pushing `-buildvcs=false` onto every user for every build.
+
+This is covered by a regression test in `test/golang_command_test.yml`, since the failure mode is invisible until someone mounts a real checkout.
+
 ### Adding Packages
 
 To add Alpine packages to the base image (discouraged - users should extend the image):

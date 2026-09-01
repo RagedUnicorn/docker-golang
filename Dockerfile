@@ -83,6 +83,17 @@ RUN apk add --no-cache \
     musl-dev \
     make
 
+# A bind-mounted source tree belongs to the host user, not to the golang user
+# inside the container, so git refuses it with "detected dubious ownership".
+# That breaks the image at its primary job: `go build` defaults to
+# -buildvcs=auto, runs git to stamp the revision, and fails outright on any
+# checkout that has a .git directory.
+#
+# Trusting every directory is the right call for a single-user build container
+# that only ever sees what the caller explicitly mounts, and is what CI images
+# do. The alternative would be forcing -buildvcs=false on every user.
+RUN git config --system --add safe.directory '*'
+
 COPY --from=build /usr/local/go /usr/local/go
 
 # Every Go path is set explicitly rather than left to default off $HOME. Go

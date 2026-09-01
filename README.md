@@ -151,6 +151,19 @@ Because the whole cache tree lives under `GOPATH`, a single named volume mounted
 docker run --rm -v "$(pwd):/app" -v gocache:/go -e GOTOOLCHAIN=auto ragedunicorn/golang:latest build ./...
 ```
 
+## Git and VCS Stamping
+
+`go build` stamps the VCS revision into the binary by default (`-buildvcs=auto`), which means it runs `git` against your mounted source tree. A bind mount belongs to the host user rather than to the `golang` user inside the container, and git normally refuses such a repository with `detected dubious ownership`, failing the build.
+
+The image therefore marks every directory as safe (`git config --system --add safe.directory '*'`), so builds of a real checkout work unchanged and the revision is stamped as expected:
+
+```bash
+docker run --rm -v "$(pwd):/app" -v gocache:/go ragedunicorn/golang:latest build ./...
+docker run --rm -v "$(pwd):/app" -v gocache:/go ragedunicorn/golang:latest version -m ./app
+```
+
+Pass `-buildvcs=false` if you would rather not stamp VCS information at all.
+
 ## Docker Compose Usage
 
 This repository includes Docker Compose configurations for easier usage and common Go workflows.

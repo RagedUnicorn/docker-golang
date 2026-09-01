@@ -25,6 +25,7 @@ Validates:
 - The `go` and `gofmt` binaries exist with correct permissions
 - The standard library source tree is present
 - `gcc`, `git` and `make` are installed (the tools the go command shells out to)
+- The system gitconfig exists (it marks bind-mounted checkouts as safe)
 - The GOPATH tree (`/go`, `/go/pkg/mod`, `/go/cache`, `/go/bin`) exists and is owned by uid/gid 1000
 - Working directory `/app` exists and is accessible
 - SSL certificates are present for module downloads
@@ -35,7 +36,7 @@ Validates:
 
 - Go and gofmt version output and PATH resolution
 - The Go environment (`GOPATH`, `GOMODCACHE`, `GOCACHE`, `GOTOOLCHAIN`, `CGO_ENABLED`)
-- `gcc` and `git` are runnable
+- `gcc` and `git` are runnable, and git trusts bind-mounted repositories
 - Compiling and running a real program with `go run`
 - A cgo build (importing `"C"`), which fails unless gcc and musl-dev are wired up
 - `gofmt` reporting an unformatted file
