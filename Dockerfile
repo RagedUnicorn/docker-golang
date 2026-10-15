@@ -1,7 +1,7 @@
 ############################################
 # Download + verify stage
 ############################################
-FROM alpine:3.24.1 AS build
+FROM alpine:3.24.2 AS build
 
 # renovate: datasource=golang-version depName=go
 ARG GO_VERSION=1.27.0
@@ -55,7 +55,7 @@ RUN set -eux; \
 ############################################
 # Runtime stage
 ############################################
-FROM alpine:3.24.1
+FROM alpine:3.24.2
 
 ARG BUILD_DATE
 ARG VERSION
@@ -69,7 +69,7 @@ LABEL org.opencontainers.image.title="Go on Alpine Linux" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.base.name="docker.io/library/alpine:3.24.1"
+      org.opencontainers.image.base.name="docker.io/library/alpine:3.24.2"
 
 # ca-certificates: TLS trust store for module downloads (family convention).
 # git: the go command shells out to it to resolve VCS module paths.
