@@ -4,7 +4,7 @@
 FROM alpine:3.24.3 AS build
 
 # renovate: datasource=golang-version depName=go
-ARG GO_VERSION=1.27.2
+ARG GO_VERSION=1.27.3
 # Provided automatically by buildx (linux/amd64 -> amd64, linux/arm64 -> arm64)
 ARG TARGETARCH
 
