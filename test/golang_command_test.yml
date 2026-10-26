@@ -6,7 +6,7 @@ commandTests:
   - name: 'Go version check'
     command: 'go'
     args: ['version']
-    expectedOutput: ['go1.27.2']
+    expectedOutput: ['go1.27.3']
     exitCode: 0
 
   - name: 'Go resolves on PATH'
