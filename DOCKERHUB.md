@@ -10,8 +10,8 @@ The Go toolchain on Alpine Linux, shipping a pinned upstream Go release decouple
 # Pull latest version
 docker pull ragedunicorn/golang:latest
 
-# Or pull specific version
-docker pull ragedunicorn/golang:1.27.0-alpine3.24.1-1
+# Or pull specific version (see the Tags tab for the available versions)
+docker pull ragedunicorn/golang:<go-version>-alpine<alpine-version>-<build>
 
 # Print the Go version
 docker run --rm ragedunicorn/golang:latest
@@ -23,7 +23,7 @@ docker run --rm -v $(pwd):/app ragedunicorn/golang:latest build ./...
 ## Features
 
 - 🚀 **Small footprint**: compact toolchain image built on Alpine Linux
-- 🐹 **Go 1.27.0**: pinned upstream release, verified by GPG at build time
+- 🐹 **Upstream Go**: pinned upstream release, verified by GPG at build time
 - 🔧 **Cgo ready**: gcc and musl-dev included, so cgo and `go test -race` work out of the box
 - 📦 **Module aware**: git for VCS module paths, pre-created cache tree at `/go`
 - 🔒 **Security**: non-root user, minimal attack surface
@@ -62,7 +62,7 @@ WORKDIR /app
 COPY --chown=golang:golang . .
 RUN CGO_ENABLED=0 go build -o /go/bin/app ./cmd/app
 
-FROM alpine:3.24.1
+FROM alpine:latest
 COPY --from=build /go/bin/app /usr/local/bin/app
 ENTRYPOINT ["app"]
 ```
@@ -75,10 +75,14 @@ This image uses semantic versioning that includes all component versions:
 
 ### Version Examples
 
-- `1.27.0-alpine3.24.1-1` - Go 1.27.0 on Alpine 3.24.1, build 1
-- `1.27.0-alpine3.24.1-2` - Rebuild of same versions (bug fixes, security patches)
-- `1.27.0` - Bare Go version, tracking the most recent build of that release
+`X.Y.Z` is the Go version, `A.B.C` the Alpine version:
+
+- `X.Y.Z-alpineA.B.C-1` - Go X.Y.Z on Alpine A.B.C, build 1
+- `X.Y.Z-alpineA.B.C-2` - Rebuild of same versions (bug fixes, security patches)
+- `X.Y.Z` - Bare Go version, tracking the most recent build of that release
 - `latest` - Most recent stable release
+
+The available versions are listed in the [Tags tab](https://hub.docker.com/r/ragedunicorn/golang/tags).
 
 The Go version is pinned per release and updated independently of Alpine. When updates are available through automated dependency management, new releases are created with appropriate version tags.
 

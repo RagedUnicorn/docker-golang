@@ -6,8 +6,10 @@ This document describes how to create a new release for the Docker Go project.
 
 ```bash
 # Tag format: v{go_version}-alpine{alpine_version}-{build_number}
-git tag -a v1.27.0-alpine3.24.1-1 -m "v1.27.0-alpine3.24.1-1"
-git push origin v1.27.0-alpine3.24.1-1
+# Take the versions from the Dockerfile (GO_VERSION and the FROM line)
+TAG=v<go-version>-alpine<alpine-version>-<build>
+git tag -a "$TAG" -m "$TAG"
+git push origin "$TAG"
 ```
 
 This automatically triggers the release process via GitHub Actions.
@@ -18,11 +20,11 @@ See [README.md](README.md#versioning) for the complete versioning documentation.
 
 **Format:** `v{go_version}-alpine{alpine_version}-{build_number}`
 
-Examples:
-- `v1.27.0-alpine3.24.1-1` - Initial release
-- `v1.27.0-alpine3.24.1-2` - Rebuild with same versions
-- `v1.27.1-alpine3.24.1-1` - Go patch update (build resets to 1)
-- `v1.27.0-alpine3.25.0-1` - Alpine update (build resets to 1)
+Examples (`X.Y.Z` is the Go version, `A.B.C` the Alpine version):
+- `vX.Y.Z-alpineA.B.C-1` - Initial release
+- `vX.Y.Z-alpineA.B.C-2` - Rebuild with same versions
+- `vX.Y.Z+1-alpineA.B.C-1` - Go patch update (build resets to 1)
+- `vX.Y.Z-alpineA.B+1.0-1` - Alpine update (build resets to 1)
 
 One git tag produces three image tags per registry: the full tag as written (minus the `v`), the bare Go version, and `latest`.
 
@@ -49,7 +51,7 @@ The very first tag push publishes to two registries, so make sure the repository
 2. GitHub Actions is enabled and workflows have package write permission
 3. The `Test` workflow is green on master
 
-After the first release, check the produced tag list on both registries: you should see `1.27.0-alpine3.24.1-1`, `1.27.0` and `latest`.
+After the first release, check the produced tag list on both registries: you should see the full tag (`X.Y.Z-alpineA.B.C-N`), the bare Go version (`X.Y.Z`) and `latest`.
 
 ## When to Create a Release
 
@@ -69,15 +71,19 @@ Create a new release when:
 
 ### Update Docker Hub Documentation
 
-After creating a release, manually update the Docker Hub repository description:
+`DOCKERHUB.md` is the source of truth for the Docker Hub repository
+description. It deliberately contains no concrete versions (readers find those
+in the Tags tab), so a release alone does not require a description update.
+Only when `DOCKERHUB.md` changed since the last sync:
 
 1. Go to [Docker Hub](https://hub.docker.com/r/ragedunicorn/golang)
 2. Click "Manage Repository" → "Description"
 3. Copy the contents of `DOCKERHUB.md`
-4. Update any version numbers in the examples to match the latest release
-5. Save the changes
+4. Save the changes
 
-**Note**: The `DOCKERHUB.md` file is maintained in the repository as the source of truth for Docker Hub documentation.
+**Note**: the sync stays manual on purpose. Docker Hub only offers an
+undocumented endpoint for description updates, and it needs a separate
+Read/Write/Delete access token.
 
 ## Best Practices
 
@@ -112,7 +118,7 @@ Before creating a release:
 
 ### Release did not trigger
 
-- Ensure tag starts with `v` and follows the format (e.g., `v1.27.0-alpine3.24.1-1`)
+- Ensure tag starts with `v` and follows the format (e.g., `vX.Y.Z-alpineA.B.C-N`)
 - Check GitHub Actions tab for workflow runs
 - Verify you have push permissions
 
@@ -156,10 +162,10 @@ If automation fails, you can create a release manually:
 
 1. Go to the repository's "Releases" page
 2. Click "Create a new release"
-3. Choose your tag (must follow format: `v1.27.0-alpine3.24.1-1`)
+3. Choose your tag (must follow format: `vX.Y.Z-alpineA.B.C-N`)
 4. Add release notes
-5. Include Docker pull commands:
+5. Include Docker pull commands (the tag without the leading `v`):
    ```
-   docker pull ghcr.io/ragedunicorn/docker-golang:1.27.0-alpine3.24.1-1
-   docker pull ragedunicorn/golang:1.27.0-alpine3.24.1-1
+   docker pull ghcr.io/ragedunicorn/docker-golang:<tag>
+   docker pull ragedunicorn/golang:<tag>
    ```

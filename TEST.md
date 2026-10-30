@@ -144,19 +144,19 @@ When testing different versions, always build locally first:
 
 ```bash
 # Build a specific version locally
-docker buildx build --load --provenance=false -t ragedunicorn/golang:1.27.0-alpine3.24.1-1 .
+docker buildx build --load --provenance=false -t ragedunicorn/golang:<go-version>-alpine<alpine-version>-<build> .
 ```
 
 **Linux/macOS:**
 
 ```bash
-GOLANG_TEST_VERSION=1.27.0-alpine3.24.1-1 docker compose -f docker-compose.test.yml run --rm test-all
+GOLANG_TEST_VERSION=<go-version>-alpine<alpine-version>-<build> docker compose -f docker-compose.test.yml run --rm test-all
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-$env:GOLANG_TEST_VERSION="1.27.0-alpine3.24.1-1"; docker compose -f docker-compose.test.yml run --rm test-all
+$env:GOLANG_TEST_VERSION="<go-version>-alpine<alpine-version>-<build>"; docker compose -f docker-compose.test.yml run --rm test-all
 ```
 
 ## Troubleshooting Test Failures
@@ -169,7 +169,7 @@ $env:GOLANG_TEST_VERSION="1.27.0-alpine3.24.1-1"; docker compose -f docker-compo
 - name: 'Go version check'
   command: 'go'
   args: ['version']
-  expectedOutput: ['go1.27.0']
+  expectedOutput: ['go<go-version>']
 ```
 
 Renovate keeps this in step with the `GO_VERSION` build arg through a regex `customManager`, so a routine bump arrives as one PR with both already updated. If you change `GO_VERSION` by hand, update this assertion too or the command tests will fail.

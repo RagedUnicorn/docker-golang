@@ -35,7 +35,7 @@ docker run --rm -v "$(pwd)/examples:/app" ragedunicorn/golang:latest run hello-w
 
 ```
 Hello, World from Docker Go!
-Go version: go1.27.0
+Go version: go<go-version>
 Platform: linux/amd64
 ```
 

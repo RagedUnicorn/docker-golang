@@ -19,7 +19,7 @@ A C toolchain (`gcc`, `musl-dev`) and `git` are included, so `go get`, `CGO_ENAB
 ## Features
 
 - **Small footprint**: compact image using Alpine Linux
-- **Go 1.27.0**: pinned upstream release, updated independently of Alpine
+- **Upstream Go**: pinned upstream release, updated independently of Alpine
 - **Cgo ready**: `gcc` and `musl-dev` included, so cgo and the race detector work out of the box
 - **Module aware**: `git` for VCS module paths, and a pre-created cache tree at `/go`
 - **Non-root user**: Enhanced security with dedicated golang user
@@ -53,8 +53,11 @@ The container uses `go` as the entrypoint, so any Go subcommand can be passed di
 docker run --rm -v "$(pwd):/app" ragedunicorn/golang:latest [go-subcommand]
 
 # Using exact version combination
-docker run --rm -v "$(pwd):/app" ragedunicorn/golang:1.27.0-alpine3.24.1-1 [go-subcommand]
+docker run --rm -v "$(pwd):/app" ragedunicorn/golang:<go-version>-alpine<alpine-version>-<build> [go-subcommand]
 ```
+
+Available tags are listed on [Docker Hub](https://hub.docker.com/r/ragedunicorn/golang/tags) and in the
+[GitHub releases](https://github.com/RagedUnicorn/docker-golang/releases).
 
 **Windows (PowerShell):**
 
@@ -229,7 +232,7 @@ WORKDIR /app
 COPY --chown=golang:golang . .
 RUN CGO_ENABLED=0 go build -o /go/bin/app ./cmd/app
 
-FROM alpine:3.24.1
+FROM alpine:latest
 COPY --from=build /go/bin/app /usr/local/bin/app
 ENTRYPOINT ["app"]
 ```
@@ -250,11 +253,13 @@ This project uses semantic versioning that matches the Docker image contents:
 
 **Format:** `{go_version}-alpine{alpine_version}-{build_number}`
 
-Examples:
-- `1.27.0-alpine3.24.1-1` - Go 1.27.0 on Alpine 3.24.1, build 1
-- `1.27.0-alpine3.24.1-2` - Rebuild of the same versions (fixes, optimizations)
-- `1.27.0` - Bare Go version, tracking the most recent build of that release
+Examples (`X.Y.Z` is the Go version, `A.B.C` the Alpine version):
+- `X.Y.Z-alpineA.B.C-1` - Go X.Y.Z on Alpine A.B.C, build 1
+- `X.Y.Z-alpineA.B.C-2` - Rebuild of the same versions (fixes, optimizations)
+- `X.Y.Z` - Bare Go version, tracking the most recent build of that release
 - `latest` - Most recent stable release
+
+The current tags are listed on [Docker Hub](https://hub.docker.com/r/ragedunicorn/golang/tags).
 
 For detailed release process and versioning guidelines, see [RELEASE.md](RELEASE.md).
 

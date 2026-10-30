@@ -61,20 +61,24 @@ The development mode:
 # Basic build
 docker build -t ragedunicorn/golang:dev .
 
-# Build with specific versions
+# Build with version metadata (Go and Alpine come from the Dockerfile)
 docker build \
   --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
-  --build-arg VERSION=1.27.0-alpine3.24.1-1 \
-  -t ragedunicorn/golang:1.27.0-alpine3.24.1-1 .
+  --build-arg VERSION=dev \
+  -t ragedunicorn/golang:dev .
 
 # Build a different Go release without editing the Dockerfile
-docker build --build-arg GO_VERSION=1.26.7 -t ragedunicorn/golang:1.26 .
+docker build --build-arg GO_VERSION=<go-version> -t ragedunicorn/golang:dev .
 
 # Multi-platform build (requires buildx)
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t ragedunicorn/golang:dev .
 ```
+
+The Go version is the `GO_VERSION` default in the `Dockerfile` and the Alpine
+version is its `FROM` line. Renovate keeps both current, so the docs do not
+repeat them.
 
 ### 3. Testing Your Changes
 
@@ -135,21 +139,20 @@ Manual version updates are rarely needed. Because the Go version is pinned indep
 
 ```dockerfile
 # renovate: datasource=golang-version depName=go
-ARG GO_VERSION=1.27.0
+ARG GO_VERSION=<go-version>
 ```
 
 When manually updating the Go version:
 
 1. Update `GO_VERSION` in the Dockerfile
-2. Update the expected version in `test/golang_command_test.yml` (`expectedOutput: ['go1.27.0']`)
+2. Update the expected version in `test/golang_command_test.yml` (`expectedOutput: ['go<go-version>']`)
 3. Test the build thoroughly
-4. Update version numbers in documentation
 
 When manually updating the Alpine version, update only the `FROM alpine:X.X.X` lines — Renovate keeps the `base.name` label and metadata test aligned on its next run.
 
 ### Why the Go toolchain is downloaded rather than installed with apk
 
-Alpine ships Go in its community repository, but the version is coupled to the Alpine release: Alpine 3.24 carries Go 1.26.3 while upstream is at 1.27.0. Go publishes a new minor every six months and supports only the last two, so an apk-pinned image would spend long stretches a full minor behind. The build stage therefore downloads the official tarball from `dl.google.com` and verifies it.
+Alpine ships Go in its community repository, but the version is coupled to the Alpine release: Alpine 3.24 carries Go 1.26.3 while upstream had already moved to 1.27. Go publishes a new minor every six months and supports only the last two, so an apk-pinned image would spend long stretches a full minor behind. The build stage therefore downloads the official tarball from `dl.google.com` and verifies it.
 
 Verification is by GPG rather than a pinned SHA-256. The signing keys are version independent, so Renovate can bump `GO_VERSION` on its own with no checksum left to maintain by hand — contrast `docker-apktool`, where a self-pinned hash has to be refreshed manually on every bump. Two keys are fetched because the signer has rotated between releases; the current one is Google Inc. (Linux Packages Signing Authority).
 

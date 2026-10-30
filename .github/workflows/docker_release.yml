@@ -77,9 +77,9 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/golang
           tags: |
             # Use the tag as-is, stripping only the 'v' prefix
-            # (e.g. 1.27.0-alpine3.24.1-1)
+            # (e.g. X.Y.Z-alpineA.B.C-N)
             type=match,pattern=v(.*),group=1
-            # Bare Go version tag (e.g. 1.27.0). type=match instead of
+            # Bare Go version tag (e.g. X.Y.Z). type=match instead of
             # type=semver: metadata-action treats the alpine suffix as a semver
             # prerelease and would render a semver pattern as the full version.
             # Skipped for prereleases so an RC does not move the bare version.
