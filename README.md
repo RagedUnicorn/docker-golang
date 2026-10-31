@@ -38,6 +38,18 @@ docker run --rm ragedunicorn/golang:latest
 docker run --rm -v "$(pwd):/app" ragedunicorn/golang:latest build ./...
 ```
 
+On Windows, use the PowerShell form:
+
+```powershell
+# Build the code in the current directory
+docker run --rm -v "${PWD}:/app" ragedunicorn/golang:latest build ./...
+```
+
+Write `${PWD}` **with braces** and keep the colon inside the quotes - without
+braces PowerShell parses `$PWD:` as a scope-qualified variable (as in
+`$env:PATH`) and rejects the argument. See the
+[Windows (PowerShell) notes](#windows-powershell-notes) for details.
+
 For development and building from source, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Usage
@@ -62,7 +74,11 @@ Available tags are listed on [Docker Hub](https://hub.docker.com/r/ragedunicorn/
 **Windows (PowerShell):**
 
 ```powershell
+# Using latest version
 docker run --rm -v "${PWD}:/app" ragedunicorn/golang:latest [go-subcommand]
+
+# Using exact version combination
+docker run --rm -v "${PWD}:/app" ragedunicorn/golang:<go-version>-alpine<alpine-version>-<build> [go-subcommand]
 ```
 
 ### Examples
@@ -109,6 +125,79 @@ docker run --rm -v "$(pwd):/app" -v gocache:/go ragedunicorn/golang:latest insta
 ```bash
 docker run -it --rm -v "$(pwd):/app" --entrypoint /bin/sh ragedunicorn/golang:latest
 ```
+
+#### PowerShell
+
+The same examples in PowerShell:
+
+```powershell
+# Check the Go version
+docker run --rm ragedunicorn/golang:latest version
+
+# Run a program
+docker run --rm -v "${PWD}:/app" ragedunicorn/golang:latest run main.go
+
+# Build a module (the gocache volume keeps the module and build cache)
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest build ./...
+
+# Run tests, with and without the race detector
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest test ./...
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest test -race ./...
+
+# Format and vet
+docker run --rm -v "${PWD}:/app" --entrypoint gofmt ragedunicorn/golang:latest -l .
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest vet ./...
+
+# Install a tool into the cache volume
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest install golang.org/x/tools/cmd/stringer@latest
+
+# Static binary without cgo (backtick continues the line)
+docker run --rm -v "${PWD}:/app" -v gocache:/go `
+  -e CGO_ENABLED=0 `
+  ragedunicorn/golang:latest build -o app ./cmd/app
+
+# Interactive shell
+docker run -it --rm -v "${PWD}:/app" --entrypoint /bin/sh ragedunicorn/golang:latest
+```
+
+### Windows (PowerShell) notes
+
+The PowerShell variants differ from the bash ones only in the mount, which is
+written `-v "${PWD}:/app"` instead of `-v "$(pwd):/app"`, and in the line
+continuation (a backtick instead of a backslash). The mount spelling matters:
+
+- Pasting the bash form into PowerShell breaks: PowerShell ends the argument
+  after the `$(pwd)` subexpression, so `$(pwd):/app` reaches Docker as two
+  arguments (`C:\path` and `:/app`) and the run fails with
+  `invalid reference format`.
+- `"$PWD:/app"` without braces is a parse error: PowerShell reads a colon
+  after a variable as a scope qualifier (as in `$env:PATH`), and `/` is not a
+  valid variable-name character.
+- `"${PWD}:/app"` works: the braces end the variable name at `PWD`, the colon
+  stays literal, and Docker splits the resulting `C:\path:/app` on the second
+  colon because it recognises the `C:` drive prefix.
+
+To check what the container actually sees under `/app`, run a look-inside
+command:
+
+```powershell
+docker run --rm -v "${PWD}:/app" --entrypoint sh ragedunicorn/golang:latest -c 'pwd; ls -la /app'
+```
+
+The single quotes keep `pwd; ls -la /app` as one literal argument to the
+container's `sh`, so the `;` runs inside the container - unquoted, PowerShell
+would treat `;` as its own statement separator and run `ls -la /app` on the
+host.
+
+Line endings: sources checked out with Windows (CRLF) line endings build and
+run unchanged, but `gofmt -l` lists every CRLF file as unformatted because
+gofmt writes LF. Check Go sources out with LF (for example a `.gitattributes`
+entry `*.go text eol=lf`) to keep `gofmt -l` meaningful.
+
+Writing into the mounted workspace as the non-root `golang` user can fail on
+Docker Desktop for Windows; see the note under
+[Cgo and Portable Binaries](#cgo-and-portable-binaries) for the root-user
+workaround.
 
 ## Cgo and Portable Binaries
 

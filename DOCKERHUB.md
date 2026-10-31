@@ -20,6 +20,15 @@ docker run --rm ragedunicorn/golang:latest
 docker run --rm -v $(pwd):/app ragedunicorn/golang:latest build ./...
 ```
 
+On Windows, use the PowerShell form - `${PWD}` **with braces** and the colon
+inside the quotes (without braces PowerShell parses `$PWD:` as a
+scope-qualified variable, as in `$env:PATH`, and rejects the argument):
+
+```powershell
+# Build the code in the current directory
+docker run --rm -v "${PWD}:/app" ragedunicorn/golang:latest build ./...
+```
+
 ## Features
 
 - 🚀 **Small footprint**: compact toolchain image built on Alpine Linux
@@ -36,9 +45,21 @@ docker run --rm -v $(pwd):/app ragedunicorn/golang:latest build ./...
 docker run --rm -v $(pwd):/app ragedunicorn/golang:latest run main.go
 ```
 
+PowerShell:
+
+```powershell
+docker run --rm -v "${PWD}:/app" ragedunicorn/golang:latest run main.go
+```
+
 ### Build a module
 ```bash
 docker run --rm -v $(pwd):/app -v gocache:/go ragedunicorn/golang:latest build ./...
+```
+
+PowerShell:
+
+```powershell
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest build ./...
 ```
 
 ### Run tests, with and without the race detector
@@ -47,10 +68,25 @@ docker run --rm -v $(pwd):/app -v gocache:/go ragedunicorn/golang:latest test ./
 docker run --rm -v $(pwd):/app -v gocache:/go ragedunicorn/golang:latest test -race ./...
 ```
 
+PowerShell:
+
+```powershell
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest test ./...
+docker run --rm -v "${PWD}:/app" -v gocache:/go ragedunicorn/golang:latest test -race ./...
+```
+
 ### Produce a portable static binary
 ```bash
 docker run --rm -v $(pwd):/app -v gocache:/go \
   -e CGO_ENABLED=0 \
+  ragedunicorn/golang:latest build -o app ./cmd/app
+```
+
+PowerShell:
+
+```powershell
+docker run --rm -v "${PWD}:/app" -v gocache:/go `
+  -e CGO_ENABLED=0 `
   ragedunicorn/golang:latest build -o app ./cmd/app
 ```
 
@@ -101,6 +137,12 @@ The default working directory is `/app`. Mount your code here:
 
 ```bash
 docker run --rm -v $(pwd):/app ragedunicorn/golang:latest build ./...
+```
+
+PowerShell:
+
+```powershell
+docker run --rm -v "${PWD}:/app" ragedunicorn/golang:latest build ./...
 ```
 
 ## A Note on musl
