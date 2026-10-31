@@ -44,6 +44,37 @@ jobs:
           echo "::endgroup::"
 
           echo "::notice title=✅ Tests Passed::All Container Structure Tests completed successfully!"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Build arm64 test image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          provenance: false
+          platforms: linux/arm64
+          tags: ragedunicorn/golang:test-arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test arm64 image
+        shell: bash
+        run: |
+          # `go version` reports the architecture the go binary was built for.
+          # An amd64 toolchain in the arm64 image would still run natively on
+          # the amd64 runner, so assert the reported platform is linux/arm64
+          echo "::group::Checking Go toolchain architecture under QEMU"
+          VERSION_OUTPUT=$(docker run --rm --platform linux/arm64 ragedunicorn/golang:test-arm64 version)
+          echo "$VERSION_OUTPUT"
+          if [[ "$VERSION_OUTPUT" != *" linux/arm64" ]]; then
+            echo "::error title=❌ Wrong Architecture::the arm64 image ships a non-arm64 Go toolchain ($VERSION_OUTPUT)"
+            exit 1
+          fi
+          echo "::endgroup::"
+
+          echo "::group::Building and running a hello-world program on arm64"
+          docker run --rm --platform linux/arm64 --entrypoint sh ragedunicorn/golang:test-arm64 -c \
+            'cd /tmp && printf "package main\n\nimport \"fmt\"\n\nfunc main() { fmt.Println(\"hello from arm64\") }\n" > main.go && go run main.go'
+          echo "::endgroup::"
 
   build-and-push:
     needs: test
