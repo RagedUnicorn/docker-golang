@@ -263,6 +263,24 @@ The current tags are listed on [Docker Hub](https://hub.docker.com/r/ragedunicor
 
 For detailed release process and versioning guidelines, see [RELEASE.md](RELEASE.md).
 
+## Image Verification
+
+Released images are signed with [cosign](https://docs.sigstore.dev/) keyless signing and carry SBOM and provenance attestations.
+
+Verification requires cosign v3 or later: the release workflow signs with cosign v3, whose signatures cosign v2 does
+not find (it reports `no signatures found`).
+
+```bash
+# Verify the signature (works for both ghcr.io/ragedunicorn/docker-golang and ragedunicorn/golang)
+cosign verify ragedunicorn/golang:latest \
+  --certificate-identity-regexp '^https://github.com/RagedUnicorn/docker-golang/\.github/workflows/docker_release\.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
+# Inspect the SBOM and provenance attestations
+docker buildx imagetools inspect ragedunicorn/golang:latest --format '{{ json .SBOM }}'
+docker buildx imagetools inspect ragedunicorn/golang:latest --format '{{ json .Provenance }}'
+```
+
 ## Automated Dependency Updates
 
 This project uses [Renovate](https://docs.renovatebot.com/) to automatically check for updates to:
