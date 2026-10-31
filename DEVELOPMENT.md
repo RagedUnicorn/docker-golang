@@ -125,8 +125,12 @@ See [TEST.md](TEST.md) for detailed testing information.
 
 This project uses [Renovate](https://docs.renovatebot.com/) to automatically manage dependency updates:
 
-- **Alpine Linux**: Renovate monitors Docker Hub and creates PRs for new Alpine versions. Every Alpine reference is kept in sync from a single grouped PR — the `FROM` lines (Renovate built-in dockerfile manager), the `org.opencontainers.image.base.name` OCI label, and the Alpine version asserted in `test/golang_metadata_test.yml` (both via regex `customManagers` in `renovate.json`).
+- **Alpine Linux**: Renovate monitors Docker Hub and creates PRs for new Alpine versions. Every Alpine reference is kept in sync from a single grouped PR — the `FROM` lines (Renovate built-in dockerfile manager), the `org.opencontainers.image.base.name` OCI label, and the Alpine version asserted in `test/golang_metadata_test.yml` (both via regex `customManagers` in the shared preset).
 - **Go**: The Go release is pinned via the `GO_VERSION` build arg, tracked through the `# renovate:` comment above it with the `golang-version` datasource. It is grouped with the exact version asserted in `test/golang_command_test.yml`, so a bump lands as one PR with the test already updated. Patch releases automerge; minor bumps are reviewed by hand.
+
+The schedule, the Alpine and harness rules and the generic custom managers come from the shared
+[RagedUnicorn/renovate-config](https://github.com/RagedUnicorn/renovate-config) preset; `renovate.json` holds only the
+Go rules and the command-test manager.
 
 When Renovate creates a PR:
 
